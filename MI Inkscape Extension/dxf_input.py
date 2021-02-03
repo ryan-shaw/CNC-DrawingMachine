@@ -22,9 +22,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 '''
 
+from __future__ import absolute_import
 import inkex, simplestyle, math
 from StringIO import StringIO
-from urllib import quote
+from urllib.parse import quote
+
 
 def export_MTEXT():
     # mandatory group codes : (1 or 3, 10, 20) (text, x, y)
@@ -239,7 +241,7 @@ def export_DIMENSION():
         y = - scale*(vals[groups['21']][0] - ymax)
         size = 12                   # default fontsize in px
         if vals[groups['3']]:
-            if DIMTXT.has_key(vals[groups['3']][0]):
+            if vals[groups['3']][0] in DIMTXT:
                 size = scale*DIMTXT[vals[groups['3']][0]]
                 if size < 2:
                     size = 2
@@ -351,14 +353,14 @@ while line[0] and line[1] != 'BLOCKS':
             xmax = get_group('10')
             ymax = get_group('20')
     if flag == 1 and line[0] == '2':
-        layername = unicode(line[1], options.input_encode)
+        layername = str(line[1], options.input_encode)
         attribs = {inkex.addNS('groupmode','inkscape'): 'layer', inkex.addNS('label','inkscape'): '%s' % layername}
         layer_nodes[layername] = inkex.etree.SubElement(doc.getroot(), 'g', attribs)
     if flag == 2 and line[0] == '2':
-        linename = unicode(line[1], options.input_encode)
+        linename = str(line[1], options.input_encode)
         linetypes[linename] = []
     if flag == 3 and line[0] == '2':
-        stylename = unicode(line[1], options.input_encode)
+        stylename = str(line[1], options.input_encode)
     if line[0] == '2' and line[1] == 'LAYER':
         flag = 1
     if line[0] == '2' and line[1] == 'LTYPE':
@@ -380,7 +382,7 @@ if options.auto:
         scale = 210.0/(xmax - xmin)                 # scale to A4 width
 else:
     scale = float(options.scale)                    # manual scale factor
-desc.text = '%s - scale = %f' % (unicode(args[0], options.input_encode), scale)
+desc.text = '%s - scale = %f' % (str(args[0], options.input_encode), scale)
 scale *= 90.0/25.4                                  # convert from mm to pixels
 
 if not layer_nodes:
@@ -398,7 +400,7 @@ entity = ''
 block = defs                                        # initiallize with dummy
 while line[0] and line[1] != 'DICTIONARY':
     line = get_line()
-    if entity and groups.has_key(line[0]):
+    if entity and line[0] in groups:
         seqs.append(line[0])                        # list of group codes
         if line[0] == '1' or line[0] == '2' or line[0] == '3' or line[0] == '6' or line[0] == '8':  # text value
             val = line[1].replace('\~', ' ')
@@ -409,7 +411,7 @@ while line[0] and line[1] != 'DICTIONARY':
             val = inkex.re.sub( '}', '', val)
             val = inkex.re.sub( '\\\\S.*;', '', val)
             val = inkex.re.sub( '\\\\W.*;', '', val)
-            val = unicode(val, options.input_encode)
+            val = str(val, options.input_encode)
             val = val.encode('unicode_escape')
             val = inkex.re.sub( '\\\\\\\\U\+([0-9A-Fa-f]{4})', '\\u\\1', val)
             val = val.decode('unicode_escape')
@@ -422,19 +424,19 @@ while line[0] and line[1] != 'DICTIONARY':
         else:                                       # unscaled float value
             val = float(line[1])
         vals[groups[line[0]]].append(val)
-    elif entities.has_key(line[1]):
-        if entities.has_key(entity):
+    elif line[1] in entities:
+        if entity in entities:
             if block != defs:                       # in a BLOCK
                 layer = block
             elif vals[groups['8']]:                 # use Common Layer Name
                 layer = layer_nodes[vals[groups['8']][0]]
             color = '#000000'                       # default color
             if vals[groups['8']]:
-                if layer_colors.has_key(vals[groups['8']][0]):
-                    if colors.has_key(layer_colors[vals[groups['8']][0]]):
+                if vals[groups['8']][0] in layer_colors:
+                    if layer_colors[vals[groups['8']][0]] in colors:
                         color = colors[layer_colors[vals[groups['8']][0]]]
             if vals[groups['62']]:                  # Common Color Number
-                if colors.has_key(vals[groups['62']][0]):
+                if vals[groups['62']][0] in colors:
                     color = colors[vals[groups['62']][0]]
             style = simplestyle.formatStyle({'stroke': '%s' % color, 'fill': 'none'})
             w = 0.5                                 # default lineweight for POINT
@@ -445,7 +447,7 @@ while line[0] and line[1] != 'DICTIONARY':
                         w = 0.5
                     style = simplestyle.formatStyle({'stroke': '%s' % color, 'fill': 'none', 'stroke-width': '%.1f' % w})
             if vals[groups['6']]:                   # Common Linetype
-                if linetypes.has_key(vals[groups['6']][0]):
+                if vals[groups['6']][0] in linetypes:
                     style += ';' + linetypes[vals[groups['6']][0]]
             entities[entity]()
         entity = line[1]
