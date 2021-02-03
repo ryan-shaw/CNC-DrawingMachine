@@ -2459,7 +2459,7 @@ class laser_gcode(inkex.Effect):
             keys = [0]
             while len(k)>0:
                 end = p[keys[-1]][-1][1]
-                dist = None
+                dist = tuple()
                 for i in range(len(k)):
                     start = p[k[i]][0][1]
                     dist = max(   ( -( ( end[0]-start[0])**2+(end[1]-start[1])**2 ) ,i)    ,   dist )
