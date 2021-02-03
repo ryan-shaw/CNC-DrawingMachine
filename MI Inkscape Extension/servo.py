@@ -786,18 +786,21 @@ def point_to_arc_distance(p, arc):
                 return (d2, [P2.x,P2.y])
 
 
-def csp_to_arc_distance(sp1,sp2, arc1, arc2, tolerance = 0.01 ): # arc = [start,end,center,alpha]
-    n, i = 10, 0
-    d, d1, dl = (0,(0,0)), (0,(0,0)), 0
-    while i<1 or (abs(d1[0]-dl[0])>tolerance and i<4):
+def csp_to_arc_distance(sp1, sp2, arc1, arc2, tolerance=0.01):  # arc = [start,end,center,alpha]
+    n = 10
+    i = 0
+    d = (0, [0, 0])
+    d1 = (0, [0, 0])
+    dl = 0
+    while i < 1 or (abs(d1[0] - dl[0]) > tolerance and i < 4):
         i += 1
-        dl = d1*1    
-        for j in range(n+1):
-            t = float(j)/n
-            p = csp_at_t(sp1,sp2,t) 
-            d = min(point_to_arc_distance(p,arc1), point_to_arc_distance(p,arc2))
-            d1 = max(d1,d)
-        n=n*2
+        dl = d1 * 1
+        for j in range(n + 1):
+            t = float(j) / n
+            p = csp_at_t(sp1, sp2, t)
+            d = min(point_to_arc_distance(p, arc1), point_to_arc_distance(p, arc2))
+            d1 = max(d1, d)
+        n = n * 2
     return d1[0]
 
 
@@ -1363,13 +1366,18 @@ def print_(*arg):
 ################################################################################
 ###        Point (x,y) operations
 ################################################################################
-class P:
+class P(object):
     def __init__(self, x, y=None):
         if not y==None:
             self.x, self.y = float(x), float(y)
         else:
             self.x, self.y = float(x[0]), float(x[1])
     def __add__(self, other): return P(self.x + other.x, self.y + other.y)
+    def __radd__(self, other):
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
     def __sub__(self, other): return P(self.x - other.x, self.y - other.y)
     def __neg__(self): return P(-self.x, -self.y)
     def __mul__(self, other):
@@ -1377,7 +1385,7 @@ class P:
             return self.x * other.x + self.y * other.y
         return P(self.x * other, self.y * other)
     __rmul__ = __mul__
-    def __div__(self, other): return P(self.x / other, self.y / other)
+    def __truediv__(self, other): return P(self.x / other, self.y / other)
     def mag(self): return math.hypot(self.x, self.y)
     def unit(self):
         h = self.mag()
@@ -1859,7 +1867,7 @@ def biarc(sp1, sp2, z1, z2, depth=0):
         alpha =  (p2a - p0a) % (2*math.pi)                    
         if (p0a<p2a and  (p1a<p0a or p2a<p1a))    or    (p2a<p1a<p0a) : 
             alpha = -2*math.pi+alpha 
-        if abs(R.x)>1000000 or abs(R.y)>1000000  or (R-P0).mag<.1 :
+        if abs(R.x)>1000000 or abs(R.y)>1000000  or (R-P0).mag()<.1 :
             return None, None
         else :    
             return  R, alpha
